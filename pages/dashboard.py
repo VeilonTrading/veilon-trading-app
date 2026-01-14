@@ -6,10 +6,10 @@ import static.elements.charts as charts
 import static.elements.metrics as metrics
 import static.elements.layout as layouts
 from pages.routes import CHECKOUT_PAGE
-from veilon_core.users import get_user_by_email, get_or_create_user_from_oidc
-from veilon_core.accounts import get_active_accounts_for_user
-from veilon_core.trades import get_trades_by_account_id
-from veilon_core.db import execute_query
+from backend.repositories.users import get_user_by_email, get_or_create_user_from_oidc
+from backend.repositories.accounts import get_active_accounts_for_user
+from backend.repositories.trades import get_trades_by_account_id
+from backend.database import execute_query
 
 performance_data = pd.DataFrame({
     "Date": [
@@ -121,15 +121,15 @@ def render_header():
         ):
             st.subheader(f"Welcome, {st.user.given_name}", anchor=False)
 
-        # Right: logo
-        with st.container(
-            border=False,
-            horizontal=True,
-            horizontal_alignment="right",
-            vertical_alignment="center",
-        ):
-            with st.container(border=False, width=200, vertical_alignment="center"):
-                st.image("static/images/veilon_dark.png")
+        # # Right: logo
+        # with st.container(
+        #     border=False,
+        #     horizontal=True,
+        #     horizontal_alignment="right",
+        #     vertical_alignment="center",
+        # ):
+        #     with st.container(border=False, width=200, vertical_alignment="center"):
+        #         st.image("static/images/veilon_dark.png")
 
 
 def get_user_id():
@@ -187,6 +187,9 @@ def render_account_selector(account_options, select_disabled):
     Render the account selectbox + add-account + logout controls.
     Returns the selected label string (same as original behaviour).
     """
+
+
+    
     with st.container(
         border=False,
         horizontal=True,
@@ -197,14 +200,14 @@ def render_account_selector(account_options, select_disabled):
             label="Select Account",
             options=account_options,
             disabled=select_disabled,
-            width=286,
+            width=168,
         )
 
         if st.button(
             label="",
             width=40,
             type="secondary",
-            icon=":material/add:",
+            icon=":material/add_circle:",
         ):
             st.switch_page(CHECKOUT_PAGE)
 
@@ -212,9 +215,9 @@ def render_account_selector(account_options, select_disabled):
             st.button(
                 label="",
                 key="logout-button",
-                width=40,
                 type="secondary",
                 icon=":material/logout:",
+                width=40,
                 on_click=logout_dialog,
             )
 
