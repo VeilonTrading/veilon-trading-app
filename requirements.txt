@@ -1,0 +1,11 @@
+streamlit
+streamlit-extras
+pandas
+altair
+psycopg2-binary
+millify
+datetime
+metaapi-cloud-sdk
+dotenv
+Authlib
+watchdog
