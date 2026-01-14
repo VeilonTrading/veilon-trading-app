@@ -417,3 +417,17 @@ def account_set_in_review(
     )
 
     return account
+
+def get_active_accounts_for_user(user_id: int) -> list[dict]:
+    return execute_query(
+        """
+        SELECT 
+            id,
+            metaapi_account_id,
+            login
+        FROM accounts
+        WHERE user_id = %s
+        AND is_enabled = TRUE;
+        """,
+        (user_id,),
+    ) or []
