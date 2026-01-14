@@ -6,10 +6,10 @@ import static.elements.charts as charts
 import static.elements.metrics as metrics
 import static.elements.layout as layouts
 from pages.routes import CHECKOUT_PAGE
-from backend.repositories.users import get_user_by_email, get_or_create_user_from_oidc
-from backend.repositories.accounts import get_active_accounts_for_user
-from backend.repositories.trades import get_trades_by_account_id
-from backend.database import execute_query
+from veilon_core.users import get_user_by_email, get_or_create_user_from_oidc
+from veilon_core.accounts import get_active_accounts_for_user
+from veilon_core.trades import get_trades_by_account_id
+from veilon_core.db import execute_query
 
 performance_data = pd.DataFrame({
     "Date": [
