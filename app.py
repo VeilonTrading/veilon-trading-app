@@ -2,6 +2,18 @@ import streamlit as st
 from pages.auth import render_login_screen, is_logged_in  # we'll split this out
 from pages import dashboard, new_account
 from pages.routes import PAGES
+from pathlib import Path
+
+
+def load_css():
+    css_path = Path("static/css/app.css")
+    st.markdown(
+        f"<style>{css_path.read_text()}</style>",
+        unsafe_allow_html=True,
+    )
+
+load_css()
+
 
 def main():
     st.set_page_config(
