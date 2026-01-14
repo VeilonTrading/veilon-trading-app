@@ -1,14 +1,15 @@
 import streamlit as st
+from streamlit_extras.stylable_container import stylable_container
 import pandas as pd
 from pages.footer import render_footer
 import static.elements.charts as charts
 import static.elements.metrics as metrics
 import static.elements.layout as layouts
 from pages.routes import CHECKOUT_PAGE
-from veilon_core.users import get_user_by_email, get_or_create_user_from_oidc
-from veilon_core.accounts import get_active_accounts_for_user
-from veilon_core.trades import get_trades_by_account_id
-from veilon_core.db import execute_query
+from backend.repositories.users import get_user_by_email, get_or_create_user_from_oidc
+from backend.repositories.accounts import get_active_accounts_for_user
+from backend.repositories.trades import get_trades_by_account_id
+from backend.database import execute_query
 
 performance_data = pd.DataFrame({
     "Date": [
@@ -95,7 +96,7 @@ def render_add_account_modal():
             options=["MetaTrader 4", "MetaTrader 5"],
         )
         st.button("Connect", use_container_width=True)
-
+    
 
 @st.dialog("Logout")
 def logout_dialog():
@@ -131,7 +132,7 @@ def render_header():
                 st.image("static/images/veilon_dark.png")
 
 
-def get_user_and_accounts():
+def get_user_id():
     """
     Resolve current user via Google / OIDC.
     If they don't exist yet in `users`, create a minimal user row.
@@ -149,8 +150,13 @@ def get_user_and_accounts():
     )
     user_id = user["id"]
 
+    return user_id
+
+
+def get_user_accounts(user_id):
     user_accounts = get_active_accounts_for_user(user_id)
-    return user_id, user_accounts
+
+    return user_accounts
 
 
 def get_account_trades(account_id):
@@ -215,138 +221,15 @@ def render_account_selector(account_options, select_disabled):
     return account_selection
 
 
-def render_overview_tab(trades):
-    with st.container(
-        border=False,
-        horizontal=True,
-        horizontal_alignment="center"
-    ):
-        metrics.gradient_metric_tile(
-            key="account-status",
-            stat=account_type,
-            value=account_status,
-            tooltip="",
-        )
-
-        metrics.standard_metric_tile(
-            key="return",
-            stat="Return",
-            value=return_stat,
-            tooltip="",
-        )
-
-        metrics.standard_metric_tile(
-            key="daily-drawdown-tile",
-            stat="Daily Drawdown",
-            value=daily_dradwown_stat,
-            tooltip="",
-        )
-
-        metrics.standard_metric_tile(
-            key="dmax-drawdown-tile",
-            stat="Max Drawdown",
-            value=max_drawdown_stat,
-            tooltip="",
-        )
-
-    with layouts.tile(key="overview-chart", height=300, border=True):
-        st.caption("Performance")
-
-        performance_data["Date"] = pd.to_datetime(performance_data["Date"])
-        chart = charts.performance_chart(performance_data)
-        st.altair_chart(chart, width="stretch")
-
-    with st.container(border=False, horizontal=True):
-        with layouts.tile(key="bar-chart", height=300, border=True):
-            st.caption("Daily Return")
-            chart = charts.daily_return_chart(daily_return_data)
-            st.altair_chart(chart, width="stretch")
-
-        with st.container(border=False, width=163):
-            with layouts.tile(key="tile-1", height=300, border=True):
-                st.caption(
-                    "Veilon Score",
-                    help=(
-                        "The Trader Score represents a blended rating based on five key performance pillars:\n\n"
-                        "• History Quality: depth and reliability of the trader’s track record\n\n"
-                        "• Profitability: consistency of returns over time\n\n"
-                        "• Consistency: stability of performance and variance control\n\n"
-                        "• Risk Management: drawdown control and position sizing discipline\n\n"
-                        "• Behaviour: adherence to rules, discipline, and emotional stability\n\n"
-                        "A score of 100 indicates perfect performance across all five pillars."
-                    ),
-                )
-                chart = charts.veilon_score_bar(veilon_score)
-                st.altair_chart(chart, width="stretch")
-
-
-def render_rewards_tab():
-    with st.container(
-        border=False,
-        horizontal=True,
-        horizontal_alignment="center"
-    ):
-        metrics.gradient_metric_tile(
-            key="withdrawable_profit",
-            stat="Total Profit",
-            value="$0.00",
-            tooltip="",
-        )
-
-        metrics.standard_metric_tile(
-            key="reward_countdown",
-            stat="Next Reward Date",
-            value="21st Nov",
-            tooltip="",
-        )
-
-        metrics.standard_metric_tile(
-            key="total_withdrawals",
-            stat="Total Rewards",
-            value="$1,251.12",
-            tooltip="",
-        )
-
-        metrics.standard_metric_tile(
-            key="avg-withdrawal",
-            stat="Average Reward",
-            value="1",
-            tooltip="",
-        )
-
-    with layouts.tile(key="payout-chart", height=300, border=True):
-        st.caption("Reward History")
-
-    with st.container(
-        border=False,
-        horizontal=True,
-        horizontal_alignment="left",
-        vertical_alignment="bottom",
-    ):
-        with layouts.tile(key="withdraw-request", height=150, border=True):
-            st.caption("New Request")
-            with st.container(
-                border=False,
-                horizontal=True,
-                horizontal_alignment="left",
-                vertical_alignment="bottom",
-            ):
-                with st.container(width=200):
-                    st.number_input("Amount", 0, 5000)
-                st.button("Request")
-
-        with layouts.tile(key="withdraw-request-log", height=150, border=True):
-            st.caption("Request Status")
-
-
-def render_settings_tab():
-    st.empty()
-
-
 def dashboard_page():
     render_header()
 
-    user_id, user_accounts = get_user_and_accounts()
+    user_id = get_user_id()
+    user_accounts = get_user_accounts(user_id)
+
+    #Account info dict needed
+    # Need Status for badge,
+    # Account type
 
     account_map, account_options, select_disabled = build_account_options(user_accounts)
 
@@ -366,15 +249,318 @@ def dashboard_page():
             ["Overview", "Rewards", "Settings"])
 
         with overview_tab:
-            render_overview_tab(trades)
+ 
+            col1, col2, col3 = st.columns(3)
+
+            st.markdown(
+                """
+                <style>
+                /* Glassmorphic stat tile */
+                div.st-key-stat-1-tile {
+                    background: rgba(23, 23, 23, 0.55) !important;
+                    border: 1px solid #3c3c3c !important;
+                    border-radius: 8px;
+                    padding: 16px;
+
+                    backdrop-filter: blur(18px);
+                    -webkit-backdrop-filter: blur(18px);
+
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+                }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            st.markdown(
+                """
+                <style>
+                /* Glassmorphic stat tile */
+                div.st-key-stat-2-tile {
+                    background: rgba(23, 23, 23, 0.55) !important;
+                    border: 1px solid #3c3c3c !important;
+                    border-radius: 8px;
+                    padding: 16px;
+
+                    backdrop-filter: blur(18px);
+                    -webkit-backdrop-filter: blur(18px);
+
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+                }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            st.markdown(
+                """
+                <style>
+                /* Glassmorphic stat tile */
+                div.st-key-stat-3-tile {
+                    background: rgba(23, 23, 23, 0.55) !important;
+                    border: 1px solid #3c3c3c !important;
+                    border-radius: 8px;
+                    padding: 16px;
+
+                    backdrop-filter: blur(18px);
+                    -webkit-backdrop-filter: blur(18px);
+
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+                }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            with col1:
+               with st.container(key="stat-1-tile", border=False, height=130):
+                    with st.container(border=False, horizontal=True, vertical_alignment="center"):
+                        st.markdown(
+                            """
+                            <div style="
+                                font-family: 'Source Sans Pro', 'Source Sans', sans-serif;
+                                color: var(--text-color);
+                                font-size: 0.875rem;
+                                line-height: normal;
+                                max-width: 100%;
+                                overflow: hidden;
+                                white-space: nowrap;
+                                text-overflow: ellipsis;
+                                margin: 0;
+                                padding: 0;
+                            ">
+                                <p style="
+                                    margin: 0;
+                                    padding: 0;
+                                    padding-bottom: 0.5rem;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                ">
+                                    10k 1-Step Challenge
+                                </p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                        
+                    st.markdown(
+                        """
+                        <div style="
+                            font-family: 'Source Sans Pro', 'Source Sans', sans-serif;
+                            color: var(--text-color);
+                            width: 100%;
+                            overflow: hidden;
+                            white-space: nowrap;
+                            text-overflow: ellipsis;
+                            line-height: normal;
+                            vertical-align: middle;
+                        ">
+                            <div style="
+                                font-size: 1.85rem;
+                                font-weight: 400;
+                                padding-top: 0;
+                                padding-bottom: 0.5rem;
+                                line-height: 1.2;
+                            ">
+                                #21
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    st.badge("Active", color="green")
+
+            with col2:
+                with st.container(key="stat-2-tile", border=False, height=130):
+                    with st.container(border=False, horizontal=True, vertical_alignment="center"):
+                        st.markdown(
+                            """
+                            <div style="
+                                font-family: 'Source Sans Pro', 'Source Sans', sans-serif;
+                                color: var(--text-color);
+                                font-size: 0.875rem;
+                                line-height: normal;
+                                max-width: 100%;
+                                overflow: hidden;
+                                white-space: nowrap;
+                                text-overflow: ellipsis;
+                                margin: 0;
+                                padding: 0;
+                            ">
+                                <p style="
+                                    margin: 0;
+                                    padding: 0;
+                                    padding-bottom: 1rem;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                ">
+                                    Max Drawdown
+                                </p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                        st.badge("On Track", color="green")
+
+                    with st.container(border=False, horizontal=True, vertical_alignment="bottom"):
+                        st.markdown(
+                            """
+                            <div style="
+                                font-family: 'Source Sans Pro', 'Source Sans', sans-serif;
+                                color: var(--text-color);
+                                width: 100%;
+                                overflow: hidden;
+                                white-space: nowrap;
+                                text-overflow: ellipsis;
+                                line-height: normal;
+                                vertical-align: bottom;
+                            ">
+                                <div style="
+                                    font-size: 1.5rem;
+                                    font-weight: 400;
+                                    padding-top: 0rem;
+                                    padding-bottom: 0.5rem;
+                                    padding-right: 0;
+                                    line-height: 1.2;
+                                ">
+                                    $1,000.00
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                        st.space("stretch")
+                        st.markdown(
+                                """
+                                <div style="
+                                    font-family: 'Source Sans Pro', 'Source Sans', sans-serif;
+                                    color: gray;
+                                    font-size: 0.875rem;
+                                    line-height: normal;
+                                    max-width: 100%;
+                                    overflow: hidden;
+                                    white-space: nowrap;
+                                    text-overflow: ellipsis;
+                                    margin: 0;
+                                    padding: 0;
+                                    vertical-align: bottom;
+                                ">
+                                    <p style="
+                                        margin: 0;
+                                        padding: 0;
+                                        padding-bottom: 0.65rem;
+                                        padding-right: 0;
+                                        padding-left: 0;
+                                        overflow: hidden;
+                                        text-overflow: ellipsis;
+                                    ">
+                                        of $10,000
+                                    </p>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                                text_alignment="right",
+                            )
+                    st.progress(0.2)
+
+            with col3:
+                with st.container(key="stat-3-tile", border=False, height=130):
+                    with st.container(border=False, horizontal=True, vertical_alignment="center"):
+                        st.markdown(
+                            """
+                            <div style="
+                                font-family: 'Source Sans Pro', 'Source Sans', sans-serif;
+                                color: var(--text-color);
+                                font-size: 0.875rem;
+                                line-height: normal;
+                                max-width: 100%;
+                                overflow: hidden;
+                                white-space: nowrap;
+                                text-overflow: ellipsis;
+                                margin: 0;
+                                padding: 0;
+                            ">
+                                <p style="
+                                    margin: 0;
+                                    padding: 0;
+                                    padding-bottom: 1rem;
+                                    overflow: hidden;
+                                    text-overflow: ellipsis;
+                                ">
+                                    Profit Target
+                                </p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                        st.badge("On Track", color="green")
+
+                    with st.container(border=False, horizontal=True, vertical_alignment="bottom"):
+                        st.markdown(
+                            """
+                            <div style="
+                                font-family: 'Source Sans Pro', 'Source Sans', sans-serif;
+                                color: var(--text-color);
+                                width: 100%;
+                                overflow: hidden;
+                                white-space: nowrap;
+                                text-overflow: ellipsis;
+                                line-height: normal;
+                                vertical-align: bottom;
+                            ">
+                                <div style="
+                                    font-size: 1.5rem;
+                                    font-weight: 400;
+                                    padding-top: 0rem;
+                                    padding-bottom: 0.5rem;
+                                    padding-right: 0;
+                                    line-height: 1.2;
+                                ">
+                                    $1,000.00
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                        st.space("stretch")
+                        st.markdown(
+                                """
+                                <div style="
+                                    font-family: 'Source Sans Pro', 'Source Sans', sans-serif;
+                                    color: gray;
+                                    font-size: 0.875rem;
+                                    line-height: normal;
+                                    max-width: 100%;
+                                    overflow: hidden;
+                                    white-space: nowrap;
+                                    text-overflow: ellipsis;
+                                    margin: 0;
+                                    padding: 0;
+                                    vertical-align: bottom;
+                                ">
+                                    <p style="
+                                        margin: 0;
+                                        padding: 0;
+                                        padding-bottom: 0.65rem;
+                                        padding-right: 0;
+                                        padding-left: 0;
+                                        overflow: hidden;
+                                        text-overflow: ellipsis;
+                                    ">
+                                        of $10,000
+                                    </p>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                                text_alignment="right",
+                            )
+                    st.progress(0.2) 
 
         with rewards_tab:
-            render_rewards_tab()
+            st.caption("Rewards")
 
         with settings_tab:
-            render_settings_tab()
-
-    render_footer()
+            st.caption("Settings")
 
 
 if __name__ == "__main__":
