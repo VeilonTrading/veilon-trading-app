@@ -129,6 +129,5 @@ def render_login_screen() -> None:
                         st.write("")
                         google_login_button()
     
-    render_footer()    
         
         
