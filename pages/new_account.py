@@ -218,7 +218,5 @@ def new_account_page():
                     scrolling=False,
                 )
 
-    render_footer()
-
 if __name__ == "__main__":
     new_account_page()
