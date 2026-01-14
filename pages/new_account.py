@@ -1,13 +1,13 @@
 import streamlit as st
+import streamlit.components.v1 as components
+from streamlit_extras.stylable_container import stylable_container
+import static.elements.layout as layouts
 from pages.routes import DASHBOARD_PAGE
 from pages.footer import render_footer
-import static.elements.layout as layouts
-from backend.repositories.plans import get_plan_by_account_size
-from backend.repositories.coupons import get_active_coupon_by_code
-from streamlit_extras.stylable_container import stylable_container
-import streamlit.components.v1 as components
-from backend.database import execute_query
-from backend.repositories.users import get_user_by_email, get_or_create_user_from_oidc
+from veilon_core.plans import get_plan_by_account_size
+from veilon_core.coupons import get_active_coupon_by_code
+from veilon_core.db import execute_query
+from veilon_core.users import get_user_by_email, get_or_create_user_from_oidc
 
 def get_user_id():
     """
