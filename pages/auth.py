@@ -48,6 +48,10 @@ def google_login_button():
         )
 
 def render_login_screen() -> None:
+    st.set_page_config(
+        page_title="Login",
+        page_icon=":material/login:"
+    )
     with st.container(border=False, horizontal=True):
         st.space("stretch")
         with st.container(border=False, horizontal_alignment="center"):
