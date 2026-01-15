@@ -23,7 +23,7 @@ def render_account_selector(account_labels: list[str], disabled: bool) -> str:
             "Select Account",
             options=account_labels,
             disabled=disabled,
-            width=168,
+            width=222,
         )
 
         if st.button("", width=40, type="secondary", icon=":material/add_circle:"):
