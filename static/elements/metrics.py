@@ -1,3 +1,4 @@
+# static/elements/metrics.py
 import streamlit as st
 
 # Keep your existing tokens (single source of truth)
@@ -18,13 +19,16 @@ caption_color        = "#878884"
 _GLASS_TILE_CSS_TMPL = """
 <style>
 div.st-key-{key} {{
-    background: rgba(23, 23, 23, 0.55) !important;
+    background: rgba(23, 23, 23, 0.25) !important;
     border: 1px solid {border} !important;
     border-radius: 8px;
     padding: 16px;
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+
+    /* Optional: helps "empty" tiles behave nicely */
+    overflow: hidden;
 }}
 </style>
 """
@@ -56,15 +60,9 @@ def metric_tile(
       - Optional progress bar
       - Optional footer badge (e.g. "Active")
     """
-
-    # Inject per-tile CSS (targets Streamlit container class derived from key)
-    st.markdown(
-        _GLASS_TILE_CSS_TMPL.format(key=key, border=border_color),
-        unsafe_allow_html=True,
-    )
+    st.markdown(_GLASS_TILE_CSS_TMPL.format(key=key, border=border_color), unsafe_allow_html=True)
 
     with st.container(key=key, border=False, height=height):
-        # Header row: title + optional badge
         with st.container(border=False, horizontal=True, vertical_alignment="center"):
             st.markdown(
                 f"""
@@ -96,7 +94,6 @@ def metric_tile(
             if title_badge:
                 st.badge(title_badge, color=title_badge_color)
 
-        # Value + optional right label
         with st.container(border=False, horizontal=True, vertical_alignment="bottom"):
             st.markdown(
                 f"""
@@ -141,3 +138,50 @@ def metric_tile(
 
         if footer_badge:
             st.badge(footer_badge, color=footer_badge_color)
+
+
+def empty_tile(
+    *,
+    key: str,
+    height: int = 130,
+    width: int | str | None = None,
+    padding: int | str = 16,
+):
+    """
+    Glass tile wrapper with NO content.
+    Use it as a spacer or as a "slot" you populate later.
+
+    Args:
+        key: Unique Streamlit key (also used by the CSS selector div.st-key-{key})
+        height: Passed to st.container(height=...)
+        width: If provided, constrains width via inline style.
+               - int => pixels
+               - str => any CSS width, e.g. "100%", "18rem", "240px"
+        padding: Overrides the default padding inside the tile content area.
+
+    Returns:
+        A Streamlit container you can write into:
+
+        with empty_tile(key="tile-x", height=200):
+            st.write("Content later")
+    """
+    # Reuse the same glass styling, but allow padding override
+    css = _GLASS_TILE_CSS_TMPL.replace("padding: 16px;", f"padding: {padding}px;" if isinstance(padding, int) else f"padding: {padding};")
+
+    st.markdown(css.format(key=key, border=border_color), unsafe_allow_html=True)
+
+    # Width isn't supported by st.container, so we wrap an inner div to constrain layout.
+    if width is None:
+        return st.container(key=key, border=False, height=height)
+
+    width_css = f"{width}px" if isinstance(width, int) else str(width)
+
+    # Outer container provides the st-key class for CSS targeting; inner div constrains width.
+    with st.container(key=key, border=False, height=height):
+        st.markdown(
+            f'<div style="width:{width_css}; max-width:100%;">',
+            unsafe_allow_html=True,
+        )
+        inner = st.container(border=False, height=height)
+        st.markdown("</div>", unsafe_allow_html=True)
+        return inner
