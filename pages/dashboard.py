@@ -4,7 +4,7 @@ from veilon_core.users import get_user_by_email, get_or_create_user_from_oidc
 from veilon_core.accounts import get_active_accounts_for_user
 from veilon_core.trades import get_trades_by_account_id
 from veilon_core.db import execute_query
-from static.elements.metrics import metric_tile
+from static.elements.metrics import metric_tile, empty_tile
 
 @st.dialog("Logout")
 def logout_dialog():
@@ -28,16 +28,17 @@ def render_account_selector(account_labels: list[str], disabled: bool) -> str:
 
         if st.button("", width=40, type="secondary", icon=":material/add_circle:"):
             st.switch_page(CHECKOUT_PAGE)
+            
+        st.space("stretch")
 
-        with st.container(border=False, horizontal=True, horizontal_alignment="right"):
-            st.button(
-                "",
-                key="logout-button",
-                type="secondary",
-                icon=":material/logout:",
-                width=40,
-                on_click=logout_dialog,
-            )
+        st.button(
+            "",
+            key="logout-button",
+            type="secondary",
+            icon=":material/logout:",
+            width=40,
+            on_click=logout_dialog,
+        )
     return selection
 
 def get_user_id() -> int:
@@ -81,6 +82,7 @@ def dashboard_page():
     overview_tab, rewards_tab, settings_tab = st.tabs(["Overview", "Rewards", "Settings"])
 
     with overview_tab:
+       
         col1, col2, col3 = st.columns(3)
 
         with col1:
@@ -116,6 +118,20 @@ def dashboard_page():
                 progress=0.2,
             )
 
+        with empty_tile(key="performance-chart", height=300):
+            st.caption("Performance Chart")
+
+        col4, col5 = st.columns(2)
+
+        with col4:
+            with empty_tile(key="stats-tile", height=300):
+                st.caption("Account Stats")
+
+        with col5:
+            with empty_tile(key="actions-tile", height=300):
+                st.caption("Account Actions")
+                st.button("Progress", disabled=True, type="secondary", width="stretch")     
+
         # You still have `trades` here for tables/charts
         # st.write(trades)
 
@@ -123,8 +139,7 @@ def dashboard_page():
         st.caption("Rewards")
 
     with settings_tab:
-        st.caption("Settings")
-
-
+        st.caption("Settings") 
+    
 if __name__ == "__main__":
     dashboard_page()
