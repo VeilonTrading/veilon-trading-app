@@ -2,6 +2,8 @@
    Global App Background
    =============================== */
 [data-testid="stAppViewContainer"] {
+    position: relative;
+
     background:
         radial-gradient(
             600px 400px at 20% 20%,
@@ -15,7 +17,7 @@
         ),
         radial-gradient(
             700px 500px at 50% 80%,
-            rgba(140, 0, 255, 0.05),
+            rgb(47, 198, 160, 0.05),
             transparent 65%
         ),
         #0e0e0e;
