@@ -6,3 +6,8 @@ secondaryBackgroundColor="#171717"
 textColor="#E8E8E8"
 baseFontSize=16
 showWidgetBorder=true
+
+[client]
+showErrorDetails = "none"
+toolbarMode = "minimal"
+showSidebarNavigation = false
