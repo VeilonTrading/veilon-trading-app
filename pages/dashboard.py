@@ -62,6 +62,10 @@ def build_account_label_map(accounts: list[dict]) -> tuple[dict[str, int], list[
     return label_to_id, list(label_to_id.keys()), False
 
 def dashboard_page():
+    st.set_page_config(
+        page_title="Dashboard",
+        page_icon=":material/home:"
+    )
     with st.container(border=False, horizontal=True, vertical_alignment="center"):
         with st.container(border=False, horizontal=True, horizontal_alignment="left", vertical_alignment="center"):
             st.subheader(f"Welcome, {getattr(st.user, 'given_name', '')}", anchor=False)
