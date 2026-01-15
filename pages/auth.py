@@ -1,6 +1,5 @@
 import streamlit as st
 from streamlit_extras.stylable_container import stylable_container
-from pages.footer import render_footer
 
 def is_logged_in() -> bool:
     """Wrapper around st.user / st.session_state, depending on how auth is configured."""
@@ -48,86 +47,9 @@ def google_login_button():
             on_click=st.login,
         )
 
-def tile(
-    key,
-    height,
-    width,
-    border,
-    horizontal,
-    horizontal_alignment,
-    vertical_alignment,
-):
-    secondary_background = "#111111"
-    light_text_color     = "#E8E8E8"
-    border_color         = "#3c3c3c"
-
-    border_style = f"1px solid {border_color};" if border else "none;"
-
-    with stylable_container(
-        key=key,
-        css_styles=f"""
-        {{
-            background-color: {secondary_background};
-            font-family: "Source Sans Pro", sans-serif;
-            font-weight: 400;
-            border-radius: 0.5rem;
-            border: {border_style};
-            padding: calc(1em - 1px);
-            color: {light_text_color};
-        }}
-        """
-    ):
-        # inner container = where Streamlit widgets go
-        return st.container(
-            border=False, 
-            height=height, 
-            width=width, 
-            horizontal=horizontal, 
-            horizontal_alignment=horizontal_alignment, 
-            vertical_alignment=vertical_alignment
-            )
-
 def render_login_screen() -> None:
-
-    #st.container(border=False, height=250)
     
-    with st.container(border=False, horizontal=True, height=700,horizontal_alignment="center", vertical_alignment="center"):
-        with st.container(border=False, height=400, width=320, vertical_alignment="center"):
-            st.image(image="static/images/veilon_dark.png")
-            st.markdown(
-                    """
-                    <div style="text-align: center; font-size: 1.5rem; color: "#3c3c3c";>
-                        Acceleration Program
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-           # st.write("")
-           # st.markdown(
-           #         """
-           #         <div style="text-align: center; font-size: 1.5rem; color: "#3c3c3c";>
-           #             Demonstrate your trading excellence.
-           #         </div>
-           #         """,
-           #         unsafe_allow_html=True
-           #     )
-        
-        with st.container(border=False, height=400, width=320, vertical_alignment="center"):
-            with tile(key="auth-interface", height=370, width=300, border=False, vertical_alignment="center", horizontal=False, horizontal_alignment="distribute"):
-                with st.container(border=False, horizontal=True, horizontal_alignment="center"):
-                    st.markdown(
-                    """
-                    <div style="text-align: center; font-size: 1.5rem; color: "#3c3c3c";>
-                        Sign Up
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                    )
-                    
-                    with st.container(border=False, width=200):
-                        st.write("")
-                        st.write("")
-                        google_login_button()
-    
-        
-        
+    left, middle, right = st.columns(3)
+    with middle: 
+        st.image(image="static/images/veilon_dark.png")
+        google_login_button()
