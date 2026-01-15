@@ -8,6 +8,6 @@ baseFontSize=16
 showWidgetBorder=true
 
 [client]
-showErrorDetails = "minimal"
-toolbarMode = "off"
+showErrorDetails = "none"
+toolbarMode = "minimal"
 showSidebarNavigation = false
