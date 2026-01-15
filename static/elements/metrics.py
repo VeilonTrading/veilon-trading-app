@@ -1,8 +1,6 @@
 import streamlit as st
-from streamlit_extras.stylable_container import stylable_container
-from static.elements.layout import tile
 
-# ---- Design tokens (for now – later these can move to config/theme) ----
+# Keep your existing tokens (single source of truth)
 primary_background   = "#111111"
 secondary_background = "#171717"
 dark_text_color      = "#171717"
@@ -13,88 +11,133 @@ border_color         = "#3c3c3c"
 caption_color        = "#878884"
 
 
-def gradient_metric_tile(
+# --------------------------------------------------------------------------------------
+# Metric Tile (glassmorphic, dashboard-ready)
+# --------------------------------------------------------------------------------------
+
+_GLASS_TILE_CSS_TMPL = """
+<style>
+div.st-key-{key} {{
+    background: rgba(23, 23, 23, 0.55) !important;
+    border: 1px solid {border} !important;
+    border-radius: 8px;
+    padding: 16px;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}}
+</style>
+"""
+
+
+def metric_tile(
+    *,
     key: str,
-    stat: str,
+    title: str,
     value: str,
+    value_size: str = "1.5rem",
+    title_badge: str | None = None,
+    title_badge_color: str = "green",
+    footer_badge: str | None = None,
+    footer_badge_color: str = "green",
+    right_label: str | None = None,
+    progress: float | None = None,
+    height: int = 130,
     tooltip: str | None = None,
+    title_padding_bottom: str = "1rem",
 ):
     """
-    Metric/KPI tile.
+    Unified metric tile for the dashboard.
 
-    Example:
-        metric_tile(
-            key="return",
-            stat="Return",
-            value="1.10%",
-            tooltip="Net return for the current evaluation stage."
-        )
+    Supports:
+      - Title + optional badge (right-aligned in header row)
+      - Big value
+      - Optional right label (e.g. "of $10,000")
+      - Optional progress bar
+      - Optional footer badge (e.g. "Active")
     """
 
-    text_color = dark_text_color
+    # Inject per-tile CSS (targets Streamlit container class derived from key)
+    st.markdown(
+        _GLASS_TILE_CSS_TMPL.format(key=key, border=border_color),
+        unsafe_allow_html=True,
+    )
 
-    # simple gradient fill container for secondary style
-    css_style = f"""
-    {{
-        background: linear-gradient(135deg, {color_1}, {color_2});
-        border-radius: 0.5rem;
-        padding: 1em;
-        color: {dark_text_color};
-        display: flex;
-        align-items: flex-start;
-        justify-content: flex-start;
-    }}
-    """
-
-    with stylable_container(key=key, css_styles=css_style):
-        with st.container(border=False, height=65):
+    with st.container(key=key, border=False, height=height):
+        # Header row: title + optional badge
+        with st.container(border=False, horizontal=True, vertical_alignment="center"):
             st.markdown(
                 f"""
-                <div style="line-height: 1.5;">
-                    <p style="margin: 0; font-size: 0.85em; color: {text_color};">
-                        {stat}
-                    </p>
-                    <p style="margin: 0; font-size: 1.2em; font-weight: bold; color: {text_color};">
-                        {value}
-                    </p>
+                <div style="
+                    font-family: 'Source Sans Pro', 'Source Sans', sans-serif;
+                    color: var(--text-color);
+                    font-size: 0.875rem;
+                    line-height: normal;
+                    max-width: 100%;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    margin: 0;
+                    padding: 0;
+                ">
+                    <p style="
+                        margin: 0;
+                        padding: 0;
+                        padding-bottom: {title_padding_bottom};
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        color: {caption_color};
+                    " title="{title}">{title}</p>
                 </div>
                 """,
                 unsafe_allow_html=True,
                 help=tooltip,
             )
+            if title_badge:
+                st.badge(title_badge, color=title_badge_color)
 
-def standard_metric_tile(
-    key: str,
-    stat: str,
-    value: str,
-    tooltip: str | None = None,
-):
-    """
-    Metric/KPI tile.
+        # Value + optional right label
+        with st.container(border=False, horizontal=True, vertical_alignment="bottom"):
+            st.markdown(
+                f"""
+                <div style="
+                    font-family: 'Source Sans Pro', 'Source Sans', sans-serif;
+                    color: {light_text_color};
+                    width: 100%;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    line-height: normal;
+                ">
+                    <div style="
+                        font-size: {value_size};
+                        font-weight: 400;
+                        padding-bottom: 0.5rem;
+                        line-height: 1.2;
+                    ">{value}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-    Example:
-        metric_tile(
-            key="return",
-            stat="Return",
-            value="1.10%",
-            tooltip="Net return for the current evaluation stage."
-        )
-    """
+            if right_label:
+                st.space("stretch")
+                st.markdown(
+                    f"""
+                    <div style="
+                        font-family: 'Source Sans Pro', 'Source Sans', sans-serif;
+                        color: {caption_color};
+                        font-size: 0.875rem;
+                        line-height: normal;
+                        white-space: nowrap;
+                        padding-bottom: 0.65rem;
+                    ">{right_label}</div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-    text_color = light_text_color
+        if progress is not None:
+            st.progress(progress)
 
-    with tile(key, 65, True):
-        st.markdown(
-            f"""
-            <div style="line-height: 1.5;">
-                <p style="margin: 0; font-size: 0.85em; color: {caption_color};">
-                    {stat}
-                </p>
-                <p style="margin: 0; font-size: 1.2em; font-weight: bold; color: {text_color};">
-                    {value}
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-            help=tooltip,
-        )
+        if footer_badge:
+            st.badge(footer_badge, color=footer_badge_color)
