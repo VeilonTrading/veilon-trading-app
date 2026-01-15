@@ -48,8 +48,10 @@ def google_login_button():
         )
 
 def render_login_screen() -> None:
-    
-    left, middle, right = st.columns(3)
-    with middle: 
-        st.image(image="static/images/veilon_dark.png")
-        google_login_button()
+    with st.container(border=False, horizontal=True):
+        st.space("stretch")
+        with st.container(border=False, horizontal_alignment="center"):
+            st.image(image="static/images/veilon_dark.png")
+            with st.container(border=False, horizontal_alignment="center", width=200):
+                google_login_button()
+        st.space("stretch")
