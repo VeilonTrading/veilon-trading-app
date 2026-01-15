@@ -9,5 +9,5 @@ showWidgetBorder=true
 
 [client]
 showErrorDetails = "none"
-toolbarMode = "minimal"
+toolbarMode = "off"
 showSidebarNavigation = false
